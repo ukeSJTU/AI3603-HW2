@@ -3,11 +3,7 @@ name = "ai3603-hw2"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.12"
 dependencies = [
     "gym==0.25.2",
-    "stable-baselines3==1.2.0",
-    "tensorboard>=2.14.0",
-    "torch==2.1.2",
-    "torchvision==0.16.2",
 ]
