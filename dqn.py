@@ -136,7 +136,12 @@ def linear_schedule(start_e: float, end_e: float, duration: int, t: int):
 if __name__ == "__main__":
     """parse the arguments"""
     args = parse_args()
-    run_name = f"{args.env_id}__{args.exp_name}__{args.seed}__{int(time.time())}"
+    # 创建包含关键超参数的运行名称，便于识别和比较
+    run_name = (
+        f"{args.env_id}__lr{args.learning_rate}__gamma{args.gamma}__"
+        f"buf{args.buffer_size}__eps{args.start_e}-{args.end_e}__"
+        f"seed{args.seed}__{int(time.time())}"
+    )
 
     """we utilize tensorboard yo log the training process"""
     writer = SummaryWriter(f"runs/{run_name}")
@@ -145,6 +150,21 @@ if __name__ == "__main__":
         "|param|value|\n|-|-|\n%s"
         % ("\n".join([f"|{key}|{value}|" for key, value in vars(args).items()])),
     )
+
+    # 使用tensorboard的hparams功能记录超参数，便于后续对比实验
+    hparam_dict = {
+        "learning_rate": args.learning_rate,
+        "gamma": args.gamma,
+        "buffer_size": args.buffer_size,
+        "batch_size": args.batch_size,
+        "start_epsilon": args.start_e,
+        "end_epsilon": args.end_e,
+        "exploration_fraction": args.exploration_fraction,
+        "target_network_freq": args.target_network_frequency,
+        "train_frequency": args.train_frequency,
+        "learning_starts": args.learning_starts,
+        "seed": args.seed,
+    }
 
     """
     comments: 设置随机种子以确保实验可复现性
@@ -196,6 +216,9 @@ if __name__ == "__main__":
     在total_timesteps（500000步）内进行训练
     """
     obs = envs.reset()
+    best_episodic_return = float('-inf')  # 跟踪最佳episode回报
+    total_episodes = 0  # 跟踪总episode数
+
     for global_step in range(args.total_timesteps):
         """
         comments: 计算当前时间步的epsilon值
@@ -230,13 +253,17 @@ if __name__ == "__main__":
         # envs.render() # close render during training
 
         if dones:
-            print(f"global_step={global_step}, episodic_return={infos['episode']['r']}")
+            episodic_return = infos['episode']['r']
+            print(f"global_step={global_step}, episodic_return={episodic_return}")
             writer.add_scalar(
-                "charts/episodic_return", infos["episode"]["r"], global_step
+                "charts/episodic_return", episodic_return, global_step
             )
             writer.add_scalar(
                 "charts/episodic_length", infos["episode"]["l"], global_step
             )
+            # 更新最佳回报和episode计数
+            best_episodic_return = max(best_episodic_return, episodic_return)
+            total_episodes += 1
 
         """
         comments: 将经验(s, a, r, s', done)存储到经验回放缓冲区
@@ -311,5 +338,23 @@ if __name__ == "__main__":
                 target_network.load_state_dict(q_network.state_dict())
 
     """close the env and tensorboard logger"""
+    # 在训练结束时记录超参数和最终性能指标，便于在tensorboard中对比不同实验
+    # 这样可以在tensorboard的HPARAMS标签页中看到所有实验的对比
+    writer.add_hparams(
+        hparam_dict,
+        {
+            "hparams/best_episodic_return": best_episodic_return,
+            "hparams/total_episodes": total_episodes,
+            "hparams/total_steps": args.total_timesteps,
+        },
+    )
+
+    print(f"\n训练完成!")
+    print(f"总步数: {args.total_timesteps}")
+    print(f"总episodes: {total_episodes}")
+    print(f"最佳episode回报: {best_episodic_return:.2f}")
+    print(f"Tensorboard日志保存在: runs/{run_name}")
+    print(f"使用以下命令查看: tensorboard --logdir=runs")
+
     envs.close()
     writer.close()
