@@ -33,19 +33,19 @@ def parse_args():
     parser.add_argument(
         "--learning-rate",
         type=float,
-        default=2.5e-4,
+        default=5e-4,
         help="the learning rate of the optimizer",
     )
     parser.add_argument(
-        "--buffer-size", type=int, default=10000, help="the replay memory buffer size"
+        "--buffer-size", type=int, default=100000, help="the replay memory buffer size"
     )
     parser.add_argument(
-        "--gamma", type=float, default=0.6, help="the discount factor gamma"
+        "--gamma", type=float, default=0.99, help="the discount factor gamma"
     )
     parser.add_argument(
         "--target-network-frequency",
         type=int,
-        default=500,
+        default=1000,
         help="the timesteps it takes to update the target network",
     )
     parser.add_argument(
@@ -57,11 +57,11 @@ def parse_args():
     parser.add_argument(
         "--start-e",
         type=float,
-        default=0.3,
+        default=1.0,
         help="the starting epsilon for exploration",
     )
     parser.add_argument(
-        "--end-e", type=float, default=0.05, help="the ending epsilon for exploration"
+        "--end-e", type=float, default=0.5, help="the ending epsilon for exploration"
     )
     parser.add_argument(
         "--exploration-fraction",
@@ -73,7 +73,7 @@ def parse_args():
         "--learning-starts", type=int, default=10000, help="timestep to start learning"
     )
     parser.add_argument(
-        "--train-frequency", type=int, default=10, help="the frequency of training"
+        "--train-frequency", type=int, default=4, help="the frequency of training"
     )
     args = parser.parse_args()
     args.env_id = "LunarLander-v2"
