@@ -9,6 +9,7 @@ import gym
 
 # ------------------------------------------------------------------------------------------- #
 
+
 class SarsaAgent(object):
     ##### START CODING HERE #####
     def __init__(self, all_actions):
@@ -20,13 +21,13 @@ class SarsaAgent(object):
         """choose action with epsilon-greedy algorithm."""
         action = np.random.choice(self.all_actions)
         return action
-    
+
     def learn(self):
         """learn from experience"""
         time.sleep(0.5)
         print("(ﾉ｀⊿´)ﾉ")
         return False
-    
+
     def your_function(self, params):
         """You can add other functions as you wish."""
         return None
@@ -45,20 +46,19 @@ class QLearningAgent(object):
         """choose action with epsilon-greedy algorithm."""
         action = np.random.choice(self.all_actions)
         return action
-    
+
     def learn(self):
         """learn from experience"""
         time.sleep(0.5)
         print("(ﾉ｀⊿´)ﾉ")
         return False
-    
+
     def your_function(self, params):
         """You can add other functions as you wish."""
         return None
 
     ##### END CODING HERE #####
-    
-    
+
 
 class Dyna_QAgent(object):
     ##### START CODING HERE #####
@@ -71,13 +71,13 @@ class Dyna_QAgent(object):
         """choose action with epsilon-greedy algorithm."""
         action = np.random.choice(self.all_actions)
         return action
-    
+
     def learn(self):
         """learn from experience"""
         time.sleep(0.5)
         print("(ﾉ｀⊿´)ﾉ")
         return False
-    
+
     def your_function(self, params):
         """You can add other functions as you wish."""
         return None
