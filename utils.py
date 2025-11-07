@@ -11,7 +11,10 @@ from PIL import Image
 def plot_training_metrics(episode_rewards, epsilon_values, algorithm_name, save_dir='assets'):
     """
     Plot training metrics (episode rewards and epsilon values) and save to file.
-    
+    Creates two visualizations:
+    1. Dual-scale training curve (first 90% vs last 10% episodes)
+    2. Epsilon decay curve
+
     Args:
         episode_rewards: List of episode rewards during training
         epsilon_values: List of epsilon values during training
@@ -20,29 +23,66 @@ def plot_training_metrics(episode_rewards, epsilon_values, algorithm_name, save_
     """
     # Create save directory if it doesn't exist
     os.makedirs(save_dir, exist_ok=True)
-    
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8))
-    
-    # Plot episode rewards
-    ax1.plot(episode_rewards, linewidth=1)
-    ax1.set_xlabel('Episode')
-    ax1.set_ylabel('Episode Reward')
-    ax1.set_title(f'{algorithm_name} Training: Episode Reward over Time')
+
+    # Create figure with 2 subplots
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8))
+
+    episodes = np.arange(len(episode_rewards))
+
+    # ========== Subplot 1: Dual-Scale Training Curve ==========
+    # Split point: 90% for early phase, last 10% for late phase (fine-grained)
+    split_point = int(len(episode_rewards) * 0.9)
+
+    # Left Y-axis: First 90% (larger range)
+    color_early = 'tab:blue'
+    ax1.set_xlabel('Episode', fontsize=11)
+    ax1.set_ylabel('First 90% Episodes Reward', color=color_early, fontsize=11)
+    ax1.plot(episodes[:split_point], episode_rewards[:split_point],
+             color=color_early, alpha=0.6, linewidth=1, label='First 90%')
+    ax1.tick_params(axis='y', labelcolor=color_early)
     ax1.grid(True, alpha=0.3)
-    
-    # Plot epsilon values
-    ax2.plot(epsilon_values, linewidth=1, color='orange')
-    ax2.set_xlabel('Episode')
-    ax2.set_ylabel('Epsilon Value')
-    ax2.set_title(f'{algorithm_name} Training: Epsilon Decay over Time')
+
+    # Right Y-axis: Last 10% (smaller range, more precise)
+    ax1_twin = ax1.twinx()
+    color_late = 'tab:red'
+    ax1_twin.set_ylabel('Last 10% Episodes Reward (Fine-grained)', color=color_late, fontsize=11)
+    ax1_twin.plot(episodes[split_point:], episode_rewards[split_point:],
+                  color=color_late, alpha=0.7, linewidth=1.5, label='Last 10%')
+    ax1_twin.tick_params(axis='y', labelcolor=color_late)
+
+    # Add vertical line at split point
+    ax1.axvline(x=split_point, color='gray', linestyle='--', alpha=0.5, linewidth=1.5)
+    ax1.text(split_point, ax1.get_ylim()[1] * 0.95, f'  Split at episode {split_point}',
+             ha='left', va='top', fontsize=10, color='gray', fontweight='bold')
+
+    ax1.set_title(f'{algorithm_name}: Dual-Scale Training Curve (First 90% vs Last 10%)',
+                  fontsize=13, fontweight='bold')
+
+    # ========== Subplot 2: Epsilon Decay ==========
+    ax2.plot(epsilon_values, linewidth=1.5, color='tab:orange', alpha=0.8)
+    ax2.set_xlabel('Episode', fontsize=11)
+    ax2.set_ylabel('Epsilon Value', fontsize=11)
+    ax2.set_title(f'{algorithm_name}: Epsilon Decay over Time', fontsize=13, fontweight='bold')
     ax2.grid(True, alpha=0.3)
-    
+
+    # Mark key epsilon milestones
+    epsilon_min = min(epsilon_values)
+    epsilon_max = max(epsilon_values)
+    epsilon_half = (epsilon_max + epsilon_min) / 2
+
+    # Find where epsilon reaches half
+    half_idx = int(np.argmin(np.abs(np.array(epsilon_values) - epsilon_half)))
+    ax2.axhline(y=epsilon_half, color='gray', linestyle='--', alpha=0.5, linewidth=1)
+    ax2.axvline(x=half_idx, color='gray', linestyle='--', alpha=0.5, linewidth=1)
+    ax2.text(half_idx, epsilon_half, f'  Half at episode {half_idx}',
+             fontsize=9, color='gray', va='bottom')
+
     plt.tight_layout()
-    
+
     # Save figure
     filename = f'{algorithm_name.lower().replace(" ", "_").replace("-", "_")}_training_metrics.png'
     filepath = os.path.join(save_dir, filename)
-    plt.savefig(filepath, dpi=150, bbox_inches='tight')
+    plt.savefig(filepath, dpi=200, bbox_inches='tight')
     print(f"Training metrics plot saved as '{filepath}'")
     plt.show()
 
